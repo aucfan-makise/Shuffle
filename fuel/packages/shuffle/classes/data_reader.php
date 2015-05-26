@@ -5,6 +5,7 @@ class DataReader{
     private $staff_file;
     private $position_file;
     private $department_file;
+    private $past_data_dir;
     
     private $persons = null;
     private $positions = null;
@@ -16,8 +17,14 @@ class DataReader{
         $this->staff_file = $files['file_dir'] . $files['staff_file'];
         $this->position_file = $files['file_dir'] . $files['position_file'];
         $this->department_file = $files['file_dir'] . $files['department_file'];
+        $this->past_data_dir = $files['past_data_dir'];
     }
-
+    public function loadPastData(){
+//         TODO:取り敢えず
+        $file = $this->past_data_dir . '/201505.json';
+        $data = json_decode(file_get_contents($file));
+        return $data;
+    }
     public function read(){
         try{
             $staff_data = file_get_contents($this->staff_file);

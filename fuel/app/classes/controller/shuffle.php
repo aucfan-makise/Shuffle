@@ -1,6 +1,7 @@
 <?php
 use Shuffle\DataReader;
 use Shuffle\DataEditor;
+use Shuffle\RelationsScore;
 use Fuel\Core\Presenter;
 use Shuffle\Shuffle;
 /**
