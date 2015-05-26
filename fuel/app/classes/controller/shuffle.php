@@ -2,6 +2,7 @@
 use Shuffle\DataReader;
 use Shuffle\DataEditor;
 use Fuel\Core\Presenter;
+use Shuffle\Shuffle;
 /**
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
@@ -42,8 +43,15 @@ class Controller_Shuffle extends Controller
 	    $presenter = Presenter::forge('shuffle/staffdata');
 	    $presenter->json_persons = $reader->getPersonsArray();
 	    $presenter->json_positions = $reader->getPositionsArray();
+	    $presenter->json_departments = $reader->getDepartmentsArray();
 	    
 	    return Response::forge($presenter);
+	}
+	
+	public function post_add_member(){
+	    $editior = new DataEditor();
+	    $editior->add();
+	    return $this->action_show_staff_data();
 	}
 	
 	public function post_update_data(){
