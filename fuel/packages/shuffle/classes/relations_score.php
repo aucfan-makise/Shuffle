@@ -9,11 +9,12 @@ class RelationsScore{
         
         $pares_array = array();
         foreach ($data as $group){
-            $pares_array = array_merge($pares_array, $this->getPareArray(0, $group));
+            $pares_array = array_merge($pares_array, $this->getPareArray($group));
         }
+        $this->past_data_score = $pares_array;
     }
     
-    public function getPareArray($pos, $array){
+     public function getPareArray($array, $pos = 0){
         $pares_array = array();
         foreach (range($pos + 1, count($array) - 1) as $current){
             $pare_array = array();
@@ -26,7 +27,11 @@ class RelationsScore{
         if (($pos + 1) == count($array) - 1){
             return $pares_array;
         } else{
-            return array_merge($pares_array, $this->getPareArray($pos + 1, $array));
+            return array_merge($pares_array, $this->getPareArray($array, $pos + 1));
         }
+    }
+    
+    public function getPastDataScore(){
+        return $this->past_data_score;
     }
 }
