@@ -20,11 +20,11 @@ $evaluator = new Evaluator();
                             <?php echo $member['name']; ?>
                         </td>
                         <td>
-                            <?php echo $member['department']; ?>
+                            <?php echo $department_array[$member['department']]['name']; ?>
                             <?php $evaluator->add($member['department']); ?>
                         </td>
                         <td>
-                            <?php echo $member['position']; ?>
+                            <?php echo $position_array[$member['position']]['name']; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

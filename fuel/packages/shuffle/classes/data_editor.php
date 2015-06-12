@@ -67,4 +67,26 @@ class DataEditor{
         $writer = new DataWriter();
         $writer->writeStaffFile($persons_array);
     }
+    
+    public function add(){
+        $reader = new DataReader();
+        $reader->read();
+        $persons_array = $reader->getPersonsArray();
+        $departments_array = $reader->getDepartmentsArray();
+        $max_id = 0;
+        foreach($persons_array as $key => $value){
+            if ($max_id < $value['id']) $max_id = $value['id'];
+        }
+        $array = array(
+            'id' => $max_id + 1,
+            'name' => $_POST['name'],
+            'department' => $_POST['department'],
+            'position' => $_POST['position'],
+            'sex' => $_POST['sex'],
+            'status' => $_POST['status']
+        );
+        $persons_array[] = $array;
+        $writer = new DataWriter();
+        $writer->writeStaffFile($persons_array);
+    }
 }
