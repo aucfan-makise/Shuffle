@@ -7,4 +7,5 @@ Autoloader::add_classes(array(
     'Shuffle\\ShuffleFunction' => __DIR__.'/classes/shuffle_function.php',
     'Shuffle\\Evaluator' => __DIR__.'/classes/evaluator.php',
     'Shuffle\\RelationsScore' => __DIR__.'/classes/relations_score.php',
+    'Shuffle\\Group' => __DIR__.'/classes/group.php',
 ));

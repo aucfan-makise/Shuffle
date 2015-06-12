@@ -20,9 +20,15 @@ class DataReader{
         $this->past_data_dir = $files['past_data_dir'];
     }
     public function loadPastData(){
-//         TODO:取り敢えず
-        $file = $this->past_data_dir . '/201505.json';
-        $data = json_decode(file_get_contents($file));
+        $data = array();
+        $files = scandir($this->past_data_dir);
+        foreach ($files as $file){
+            $absolute_path = $this->past_data_dir . '/' . $file;
+            if (is_file($absolute_path)){
+                preg_match('/([0-9]+)\.json$/', $file, $matches); 
+                $data[$matches[1]] = json_decode(file_get_contents($absolute_path));
+            }
+        }
         return $data;
     }
     public function read(){

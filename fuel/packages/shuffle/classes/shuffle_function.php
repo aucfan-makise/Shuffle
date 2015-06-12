@@ -4,161 +4,161 @@ class ShuffleFunction{
     private $relations_score;
     private $persons;
     private $result;
-    
-    private $min_member_count;
-    
     private $group_count;
-    private $member_count_array;
+    private $persons_id_array;
     
     public function __construct(){
         set_time_limit(0);
         ini_set('memory_limit', '512M');
-        $this->relations_score = new RelationsScore();
+        $this->relations_score = RelationsScore::getPastDataScore();
         $reader = new DataReader();
         $reader->read();
         $this->persons = $reader->getPersonsArray();
-foreach (range(0, 67) as $dummy) array_shift($this->persons);
         \Config::load('shuffle', true);
         $properties = \Config::get('shuffle.shuffle_properties');
         $this->min_member_count = $properties['min_member_count'];
-        $this->group_count = floor(count($this->persons) / $this->min_member_count);
+        $this->group_count = $properties['group_count'];
         
-        $this->member_count_array = array();
-        if (count($this->persons) % $this->min_member_count != 0){
-            foreach (range(1, count($this->persons) % $this->min_member_count) as $dummy){
-                $this->member_count_array[] = $this->min_member_count + 1;
+//         IDのみの配列を作る
+        $this->persons_id_array = array();
+        foreach ($this->persons as $person) $this->persons_id_array[] = $person['id'];
+    }
+    
+    /**
+     * スコアが高い人たち(一緒のグループにしちゃいけない人たち)のグループをつくる。
+     * @return multitype:multitype:unknown
+     */
+    private function getNeighborhoodGroups(){
+//         TODO:過去データにない人も混ぜる
+        $groups = array();
+        $members = array();
+        $added_members = array();
+        $member_par_group = $this->group_count;
+        $remaining_members = $this->persons_id_array;
+
+//         過去のデータから作る
+        foreach ($this->relations_score as $pare){
+            if (! (in_arrayi($pare['pare'][0], $remaining_members) && in_arrayi($pare['pare'][1], $remaining_members))) continue;
+            foreach ($pare['pare'] as $one_of_pare){
+                if (in_arrayi($one_of_pare, $added_members)) continue;
+
+                $members[] = $one_of_pare;
+                unset($remaining_members[array_search($one_of_pare, $remaining_members)]);
+
+                if (count($members) == $member_par_group){
+                    $groups[] = $members;
+                    $members = array();
+                }
             }
         }
-        if (count($this->member_count_array) != $this->group_count){
-            foreach (range(count($this->member_count_array), $this->group_count)as $dummy){
-                echo $dummy;
-                $this->member_count_array[] = $this->min_member_count;
+        
+//         残りの人も入れていく
+        $remaining_members = array_values($remaining_members);
+        foreach ($remaining_members as $member){
+            $members[] = $member;
+            if (count($members) == $member_par_group){
+                $groups[] = $members;
+                $members = array();
             }
+            
         }
+        
+        if (! empty($members)) $groups[] = $members;
+        return $groups;
+    }
+    
+    /**
+     * usortで使うやつ。
+     * @param unknown $a
+     * @param unknown $b
+     * @return number
+     */
+    private function groupsComparer($a, $b){
+        if ($a->getScore() == $b->getScore()) return 0;
+        return $a->getScore() > $b->getScore() ? -1 : 1;
+    }
+    /**
+     * Groupのオブジェクトの入った配列をGroupのスコアが高い順に並べる。
+     * @param unknown $groups
+     * @return unknown
+     */
+    private function sortGroupsByScore($groups){
+        usort($groups, array('Shuffle\ShuffleFunction', 'groupsComparer'));
+        return $groups;
     }
     
     public function solve(){
-        $id_array = array();
-        foreach ($this->persons as $person) $id_array[] = $person['id'];
-        $combinations = $this->getCombinationArray($this->member_count_array, $id_array);
-        $combination_score_array = $this->calcScore($combinations);
-        $result = $this->getBestScoreCombination($combination_score_array, $combinations);
-        $groups_array = $this->generateGroupArray($result);
-        $this->result = $this->exchengeIdToObject($groups_array);
-    }
-    
-    private function getBestScoreCombination($combination_score_array, $combinations){
-        asort($combination_score_array);
-        $best_id = array_shift($combination_score_array);
-        return $combinations[$best_id];
-        
-    }
-    
-    private function exchengeIdToObject($groups_array){
-        foreach ($groups_array as $group_key => $group){
-            foreach ($group as $member_key => $member){
-                foreach ($this->persons as $person){
-                    if ($person['id'] == $member){
-                        $groups_array[$group_key][$member_key] = $person;
-                        break;
+//         TODO:未完成
+        $neighborhood_groups = $this->getNeighborhoodGroups();
+        $remaining_members = $this->persons_id_array;
+        $groups = array();
+        foreach ($neighborhood_groups as $neighborhood_group){
+//             最初のグループは全部別々のグループに入れる
+            if (empty($groups)){
+                foreach ($neighborhood_group as $neighborhood){
+                    $group = new Group();
+                    $group->add($neighborhood);
+                    $groups[] = $group;
+                }
+                continue;
+            }
+            
+//             現時点のスコアの高いグループから処理する
+            foreach ($groups as $group){
+                if (count($neighborhood_group) === 0) break;
+                $best_score = '';
+                $best_member = '';
+                
+//                 グループに加入した場合一番スコアが低くなる人を選ぶ
+                foreach ($neighborhood_group as $key => $neighborhood){
+                    if ($best_score === '' || $best_score > $group->getScore($neighborhood)){
+                        $best_score = $group->getScore($neighborhood);
+                        $best_member = $key;
                     }
                 }
+                $group->add($neighborhood_group[$best_member]);
+                unset($neighborhood_group[$best_member]);
+                $neighborhood_group = array_values($neighborhood_group);
             }
+//             スコアの高い順にソート
+            $groups = $this->sortGroupsByScore($groups);
         }
-        return $groups_array;
-    }
-    private function generateGroupArray($combination){
-        $groups_array = array();
-        $pos = 0;
-        foreach ($this->member_count_array as $member_count){
-            $group = array();
-            $group = array_slice($combination, $pos, $member_count);
-            $pos += $member_count;
-            $groups_array[] = $group;
-        }
-        return $groups_array;
-    }
-    private function calcScore($combinations){
-        $person_score_array = $this->relations_score->getPastDataScore();
-        $combination_score_array = array();
-        foreach ($combinations as $combination){
-            $group_score_array = array();
-            foreach ($this->generateGroupArray($combination) as $group){
-                $group_sum_score = 0;
-                $pares = $this->createPare($group);        
-                foreach ($pares as $pare){
-                    foreach ($person_score_array as $past_data){
-                        if (in_arrayi($pare[0], $past_data['pare']) && in_arrayi($pare[1], $past_data['pare'])){
-                            $group_sum_score += $past_data['score'];    
-                        }
-                    }
-                }
-                $group_score_array[] = $group_sum_score / count($pares);
-            }
-            $combination_score_array[] = array_sum($group_score_array) / $this->group_count;
-        }
-        return $combination_score_array;
+        $this->result = $this->exchangeGroupObjToPersonsArray($groups);
     }
     
-    private function createPare($array, $pos = 0){
-        $pares_array = array();
-        foreach (range($pos + 1, count($array) - 1) as $current){
-            $pare_array = array();
-            $pare_array[] = array($array[$pos], $array[$current]);
-            $pares_array = $pare_array;
+    /**
+     * GroupのオブジェクトをPersonのデータを元にした配列に変換する。
+     * @param unknown $groups
+     * @return multitype:multitype:Ambigous <boolean, unknown>
+     */
+    private function exchangeGroupObjToPersonsArray($groups){
+        $result_array = array();
+        foreach ($groups as $group){
+            $result_group = array();
+            foreach ($group->getMembersId() as $id){
+                $result_group[] = $this->findPersonById($id);
+            }
+            $result_array[] = $result_group;
         }
-        if (($pos + 1) == count($array) - 1){
-            return $pares_array;
-        } else{
-            return array_merge($pares_array, $this->createPare($array, $pos + 1));
+        return $result_array;
+    }
+    
+    /**
+     * Personデータからidをもとに検索して返す。
+     * @param unknown $id
+     * @return unknown|boolean
+     */
+    private function findPersonById($id){
+        foreach ($this->persons as $person){
+            if ($person['id'] === $id) return $person;
         }
+        return false;
     }
-
-    private function getCombinationArray($member_count_array, $persons, $count_array_pos = 0){
-	    if(count($persons) == $member_count_array[$count_array_pos]) return array($persons);
-	    
-	    $first = array_shift($persons);
-	    $combinations = $this->combination($member_count_array[$count_array_pos] - 1, $persons);
-	    $return = array();
-	    foreach ($combinations as $combination){
-		    $array = array();
-		    $sub_persons = $persons;
-		    foreach ($sub_persons as $person_key => $person){
-			    foreach ($combination as $c){
-				    if ($c == $person) unset($sub_persons[$person_key]);
-			    }
-		    }
-		    $sub_persons = array_values($sub_persons);
-		    $result = $this->getCombinationArray($member_count_array, $sub_persons, $count_array_pos + 1);
-		    array_unshift($combination, $first);
-		    foreach ($result as $r){
-			    $return[] = array_merge($combination, $r);
-		    }
-	    }
-	    return $return;
-    }
-
-    private function combination($member_count, $persons, $member_pos = 0, $current = 0){
-	    if ($member_count === $member_pos + 1){
-		    $array = array();
-		    foreach (range($current, count($persons) - 1) as $c){
-			    $array[] = array($persons[$c]);
-		    }
-		    return $array;
-	    }
-	    
-	    $array = array();
-	    foreach (range($current + 1, count($persons) - $member_count + $member_pos + 1) as $c){
-		    $inner = array($persons[$c - 1]);
-			$res = $this->combination($member_count, $persons, $member_pos + 1, $c);
-		    foreach ($res as $key => $r){
-			    $merge = array();
-			    $merge[] = array_merge($inner, $r);
-			    $array = array_merge($array, $merge);
-		    }
-	    }
-	    return $array;
-    }
+    
+    /**
+     * 結果を返す。
+     * @return multitype:\Shuffle\multitype:Ambigous
+     */
     public function getResult(){
         return $this->result;
     }

@@ -10,8 +10,9 @@ return array(
         'past_data_dir' => '/var/www/html/shuffle/data/past_data',
     ),
     'shuffle_properties' => array(
-//         'min_member_count' => 5,
-        'min_member_count' => 3,
+        'min_member_count' => 5,
+//         'min_member_count' => 3,
         'max_member_count' => 6,
+        'group_count' => 15,
     )
 );
