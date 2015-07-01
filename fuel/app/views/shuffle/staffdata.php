@@ -51,12 +51,15 @@
                         </td>
                         <td>
                             <select name='status_array[<?php echo $person['id']; ?>]'>
-                            <option value='true'<?php 
-                                echo $person['status'] === 'true' ? ' selected' : '';
-                                ?>>True</option>
-                            <option value='false'<?php
-                                echo $person['status'] === 'false' ? ' selected' : '';
-                                ?>>False</option>
+                            <option value='presence'<?php 
+                                echo $person['status'] === 'presence' ? ' selected' : '';
+                                ?>>出席</option>
+                            <option value='absence'<?php
+                                echo $person['status'] === 'absence' ? ' selected' : '';
+                                ?>>欠席</option>
+                            <option value='leaved'<?php
+                                echo $person['status'] === 'leaved' ? ' selected' : '';
+                                ?>>退社</option>
                             </select>
                         </td>
                         <td>

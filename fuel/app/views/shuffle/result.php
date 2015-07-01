@@ -6,8 +6,11 @@ $evaluator = new Evaluator();
     <head>
         <title>Result</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	    <?php echo Asset::js('result_page.js'); ?>
     </head>
     <body>
+        <button type="button" id="save_button" name="save_button">保存</button>
         <?php foreach ($result as $group => $members): ?>
             グループ:<?php echo $group; ?>
             <table>

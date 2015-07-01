@@ -8,15 +8,17 @@ class ShuffleFunction{
     private $persons_id_array;
     
     public function __construct(){
-        set_time_limit(0);
-        ini_set('memory_limit', '512M');
         $this->relations_score = RelationsScore::getPastDataScore();
         $reader = new DataReader();
         $reader->read();
-        $this->persons = $reader->getPersonsArray();
+        
+//         退社済みの人を除く。
+        $this->persons = array();
+        foreach ($reader->getPersonsArray() as $person){
+            if ($person['status'] !== 'leaved') $this->persons[] = $person;
+        }
         \Config::load('shuffle', true);
         $properties = \Config::get('shuffle.shuffle_properties');
-        $this->min_member_count = $properties['min_member_count'];
         $this->group_count = $properties['group_count'];
         
 //         IDのみの配列を作る
@@ -29,7 +31,6 @@ class ShuffleFunction{
      * @return multitype:multitype:unknown
      */
     private function getNeighborhoodGroups(){
-//         TODO:過去データにない人も混ぜる
         $groups = array();
         $members = array();
         $added_members = array();
@@ -88,7 +89,6 @@ class ShuffleFunction{
     }
     
     public function solve(){
-//         TODO:未完成
         $neighborhood_groups = $this->getNeighborhoodGroups();
         $remaining_members = $this->persons_id_array;
         $groups = array();
@@ -123,36 +123,8 @@ class ShuffleFunction{
 //             スコアの高い順にソート
             $groups = $this->sortGroupsByScore($groups);
         }
-        $this->result = $this->exchangeGroupObjToPersonsArray($groups);
-    }
-    
-    /**
-     * GroupのオブジェクトをPersonのデータを元にした配列に変換する。
-     * @param unknown $groups
-     * @return multitype:multitype:Ambigous <boolean, unknown>
-     */
-    private function exchangeGroupObjToPersonsArray($groups){
-        $result_array = array();
-        foreach ($groups as $group){
-            $result_group = array();
-            foreach ($group->getMembersId() as $id){
-                $result_group[] = $this->findPersonById($id);
-            }
-            $result_array[] = $result_group;
-        }
-        return $result_array;
-    }
-    
-    /**
-     * Personデータからidをもとに検索して返す。
-     * @param unknown $id
-     * @return unknown|boolean
-     */
-    private function findPersonById($id){
-        foreach ($this->persons as $person){
-            if ($person['id'] === $id) return $person;
-        }
-        return false;
+
+        $this->result = $groups;
     }
     
     /**

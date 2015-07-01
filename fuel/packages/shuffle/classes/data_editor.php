@@ -1,5 +1,6 @@
 <?php
 namespace Shuffle;
+// TODO:状態を変更できるようにする。
 class DataEditor{
     private $delete_checkbox_array = null;
     
@@ -25,6 +26,15 @@ class DataEditor{
     }
     
     /**
+     * statusの検証フィルタ
+     * @param boolean $status
+     * @return boolean
+     */
+    function filterValidateStatus($status){
+        return ($status === 'presence' || $status === 'absence' || $status === 'leaved') ? true : false;
+    }
+
+    /**
      * POSTで渡されたステータスの検査を行う
      * @access private
      * @throws Exception
@@ -41,8 +51,8 @@ class DataEditor{
                 }
             }
             foreach ($_POST['status_array'] as $id => $status){
-                if (is_null(filter_var($status, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE))){
-                    throw new Exception();
+                if (! filter_var($status, FILTER_CALLBACK, array('options' => array('Shuffle\DataEditor', 'filterValidateStatus')))){
+                    throw new \Exception();
                 }
             }
         } catch (Exception $e){
@@ -51,7 +61,7 @@ class DataEditor{
     }
     
     /**
-     * データファイルからidで消す操作を行う
+     * メンバーのステータスを'leaved'に変えて保存する。
      * @access private
      */
     private function delete(){
@@ -59,8 +69,8 @@ class DataEditor{
         $reader->read();
         $persons_array = $reader->getPersonsArray();
         foreach ($this->delete_checkbox_array as $pos){
-            foreach ($persons_array as $key => $person){
-                if ($person['id'] == $pos) unset($persons_array[$key]);
+            foreach ($persons_array as $key => &$person){
+                if ($person['id'] == $pos) $person['status'] = 'leaved';
                 continue;
             }
         }
@@ -68,15 +78,21 @@ class DataEditor{
         $writer->writeStaffFile($persons_array);
     }
     
+    /**
+     * 新しくメンバーを加える。
+     * @access public
+     */
     public function add(){
         $reader = new DataReader();
         $reader->read();
         $persons_array = $reader->getPersonsArray();
         $departments_array = $reader->getDepartmentsArray();
+
         $max_id = 0;
         foreach($persons_array as $key => $value){
             if ($max_id < $value['id']) $max_id = $value['id'];
         }
+
         $array = array(
             'id' => $max_id + 1,
             'name' => $_POST['name'],
