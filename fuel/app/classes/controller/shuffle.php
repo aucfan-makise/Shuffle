@@ -4,6 +4,8 @@ use Shuffle\DataEditor;
 use Shuffle\RelationsScore;
 use Fuel\Core\Presenter;
 use Shuffle\Shuffle;
+use Shuffle\ShuffleFunction;
+use Shuffle\DataWriter;
 /**
  * Fuel is a fast, lightweight, community driven PHP5 framework.
  *
@@ -62,9 +64,19 @@ class Controller_Shuffle extends Controller
 
 	public function action_shuffle(){
 	    $presenter = Presenter::forge('shuffle/result');
+	    $reader = new DataReader();
+	    $reader->read();
+	    $presenter->persons_array = $reader->getPersonsArray();
+	    $presenter->position_array = $reader->getPositionsArray();
+	    $presenter->department_array = $reader->getDepartmentsArray();
 	    
+	    $shuffle_function = new ShuffleFunction();
+	    $shuffle_function->solve();
+	    $presenter->result = $shuffle_function->getResult();
 	    return Response::forge($presenter);
 	}
+	
+
 	/**
 	 * A typical "Hello, Bob!" type example.  This uses a Presenter to
 	 * show how to use them.

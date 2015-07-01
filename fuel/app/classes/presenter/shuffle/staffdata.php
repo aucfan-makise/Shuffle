@@ -29,8 +29,9 @@ class Presenter_Shuffle_Staffdata extends Presenter{
             'female' => '女性'
         );
         $this->status_form_options = array(
-            'true' => 'true',
-            'false' => 'false'
+            'presence' => '出席',
+            'absence' => '欠席',
+            'leaved' => '退社',
         );
         
     }
