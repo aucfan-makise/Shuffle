@@ -8,4 +8,5 @@ Autoloader::add_classes(array(
     'Shuffle\\Evaluator' => __DIR__.'/classes/evaluator.php',
     'Shuffle\\RelationsScore' => __DIR__.'/classes/relations_score.php',
     'Shuffle\\Group' => __DIR__.'/classes/group.php',
+    'Shuffle\\ValidateException' => __DIR__.'/classes/validate_exception.php',
 ));

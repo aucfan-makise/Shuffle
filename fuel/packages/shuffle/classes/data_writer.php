@@ -2,13 +2,13 @@
 namespace Shuffle;
 use Fuel\Core\Config;
 class DataWriter{
-    private $data_dir;
+    private $saved_result_data_dir;
     private $staff_file;
     
     public function __construct(){
         Config::load('shuffle', true);
         $files = Config::get('shuffle.data_json_files');
-        $this->data_dir = $files['saved_files_dir'];
+        $this->saved_result_data_dir = $files['saved_result_data_dir'];
         $this->staff_file = $files['file_dir'] . $files['staff_file'];
     }
     
@@ -27,9 +27,41 @@ class DataWriter{
         file_put_contents ($this->staff_file, json_encode($out_array));
     }
     
-    public function writeShuffledData(array $out_array){
-        $datetime = new DateTime('NOW');
-        $out_file = $this->data_dir.$datetime->format('Y-n-j_HH:MM:II');
-        file_put_contents ($out_file, json_encode($out_array));
+    public function writeResultData($result){
+        $datetime = new \DateTime('NOW');
+        $out_file = $this->saved_result_data_dir . '/' . \Date::time()->format('mysql');
+        file_put_contents($out_file, $result);
+    }
+    
+    /**
+     * json形式のシャッフルした結果の配列をバリデーションする。
+     * @param unknown $json_result
+     * @throws ValidateException
+     * @return boolean
+     */
+    public function validateResultData($json_result){
+        $result = json_decode($json_result, true);
+        try {
+            if (is_null($result)) throw new ValidateException('Result is null.');
+            array_walk_recursive($result, array('Shuffle\DataWriter', 'validateNumericArray'));
+        }catch (ValidateException $e){
+            throw new ValidateException('Result data in cookie. ' . $e->getThisNodeMessage());
+        }
+        return true;
+    }
+    
+    /**
+     * array_walk_recursiveに使う。
+     * 配列内のvalueが数字かどうか確認する。
+     * エラーじゃなかったらtrueを返す。
+     * @param unknown $value
+     * @param unknown $key
+     * @throws ValidateException
+     * @return boolean
+     */
+    private function validateNumericArray($value, $key){
+        $validate_result = filter_var($value, FILTER_VALIDATE_INT);
+        if (! $validate_result) throw new ValidateException('Non-numeric is contained in an array.');
+        return true;
     }
 }
