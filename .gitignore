@@ -41,3 +41,5 @@ TESTING.md
 composer.json
 composer.phar
 one_time_files
+*.swp
+
