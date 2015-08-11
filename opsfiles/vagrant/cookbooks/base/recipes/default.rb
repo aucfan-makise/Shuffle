@@ -3,16 +3,24 @@
 # Recipe:: default
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
-package "php"
-
-package "httpd"
-serivce "httpd" do
-	action [:enable, :start]
+package "php" 
+template "/etc/php.d/php.local.ini" do
+	source "php.local.ini.erb"
+	owner 'root'
+	group 'root'
+	mode 0644
 end
+
+
+package "httpd" 
 
 template "/etc/httpd/conf/httpd.conf" do
 	source "httpd.conf.erb"
 end
+service "httpd" do
+	action [:start, :enable]
+end
+
 
 execute "setenforce 0" do
 	only_if "getenforce | grep -q Enforcing"

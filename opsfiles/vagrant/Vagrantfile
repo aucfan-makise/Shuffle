@@ -36,20 +36,22 @@ Vagrant.configure(2) do |config|
 
   config.ssh.forward_agent = true
 
-	config.vm.define :shuffle do |web|
-		web.vm.hostname = 'shuffle.aucfan.com'
-		web.vm.network :private_network, ip: "192.168.33.10"
-		config.vm.synced_folder "../../", "/deploy/shuffle/", :create => true, :owner=> 'vagrant', :group=> 'vagrant', :mount_options=>['dmode=777,fmode=777']
-		web.vm.provider :virtualbox do |vb|
-			vb.customize ["modifyvm", :id, "--memory", 1024]
-			vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-			vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
-		end
-	end
+  config.vm.define :shuffle do |web|
+  	web.vm.hostname = 'shuffle.aucfan.com'
+  	web.vm.network :private_network, ip: "192.168.33.10"
+  	config.vm.synced_folder "../../", "/deploy/shuffle/", :create => true, :owner=> 'vagrant', :group=> 'vagrant', :mount_options=>['dmode=777,fmode=777']
+  	web.vm.provider :virtualbox do |vb|
+  		vb.customize ["modifyvm", :id, "--memory", 1024]
+  		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  		vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+  	end
+  
+  	web.vm.provision :chef_solo do |chef|
+  		chef.add_recipe "base"
+  	end
+  end
 
-	config.vm.provision :chef_solo do |chef|
-		chef.add_recipe "base"
-	end
+	
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
