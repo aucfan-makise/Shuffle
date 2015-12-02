@@ -8,7 +8,8 @@ class RelationsScore{
         $this_month = new \DateTime();
         $datetime = new \DateTime($year_month . '01');
         $diff = date_diff($this_month, $datetime);
-        $score = 1 / ($diff->m + 1);
+        $month_diff = ($diff->y * 12) + $diff->m;
+        $score = 1 / $month_diff;
         return $score;
     }
     private function __construct(){
