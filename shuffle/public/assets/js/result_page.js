@@ -1,7 +1,6 @@
 (function(){
     $(function(){
         $('#save_button').click(function(){
-//   TODO:ajaxで送るわ 
             $.ajax({
                 url: '/ajax/result_save.json',
                 type: 'post',

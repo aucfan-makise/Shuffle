@@ -4,14 +4,20 @@ use Fuel\Core\Config;
 class DataWriter{
     private $saved_result_data_dir;
     private $staff_file;
+    private $organization_file;
     
     public function __construct(){
         Config::load('shuffle', true);
         $files = Config::get('shuffle.data_json_files');
         $this->saved_result_data_dir = $files['saved_result_data_dir'];
         $this->staff_file = $files['file_dir'] . $files['staff_file'];
+        $this->organization_file = $files['file_dir'] . $files['organization_file'];
     }
     
+    /**
+     * 社員のデータファイルに書き込む。
+     * @param array $out_array
+     */
     public function writeStaffFile(array $out_array){
         $reader = new DataReader();
         $reader->read();
@@ -27,6 +33,18 @@ class DataWriter{
         file_put_contents ($this->staff_file, json_encode($out_array));
     }
     
+    /**
+     * 組織をファイルに書き込む
+     * @param array $out_array
+     */
+    public function writeOrganizationFile(array $out_array){
+        file_put_contents($this->organization_file, json_encode($out_array));
+    }
+    
+    /**
+     * 結果を日付名のファイルに書き込む。
+     * @param unknown $result
+     */
     public function writeResultData($result){
         $datetime = new \DateTime('NOW');
         $out_file = $this->saved_result_data_dir . '/' . \Date::time()->format('mysql');

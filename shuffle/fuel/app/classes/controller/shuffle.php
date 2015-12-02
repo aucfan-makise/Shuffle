@@ -46,19 +46,28 @@ class Controller_Shuffle extends Controller
 	    $presenter = Presenter::forge('shuffle/staffdata');
 	    $presenter->json_persons = $reader->getPersonsArray();
 	    $presenter->json_positions = $reader->getPositionsArray();
+	    
+	    $form_presenter = Presenter::forge('shuffle/form');
+	    $form_presenter->json_organization = $reader->getOrganizationArray();
+	    $form_presenter->json_departments = $reader->getDepartmentsArray();
+	    $form_presenter->json_positions = $reader->getPositionsArray();
+	    $presenter->organization_form = $form_presenter;
+
 	    $presenter->json_departments = $reader->getDepartmentsArray();
+		$presenter->json_organization = $reader->getOrganizationArray();
 	    
 	    return Response::forge($presenter);
 	}
 	
 	public function post_add_member(){
 	    $editior = new DataEditor();
-	    $editior->add();
+	    $editior->addMember();
 	    return $this->action_show_staff_data();
 	}
 	
 	public function post_update_data(){
 	    $editor = new DataEditor();
+		$editor->update(Input::post('company_status_array'));
         return $this->action_show_staff_data();
 	}
 

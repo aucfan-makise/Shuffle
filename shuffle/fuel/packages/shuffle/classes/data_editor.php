@@ -1,11 +1,14 @@
 <?php
 namespace Shuffle;
+use Fuel\Core\Debug;
+use Fuel\Core\Input;
 // TODO:状態を変更できるようにする。
 class DataEditor{
     private $delete_checkbox_array = null;
     
     public function __construct(){
-        $this->initialize();    
+        $this->initialize();
+        //TODO:なんでこんなことしたんだろう
         if (! is_null($this->delete_checkbox_array)) $this->delete();
     }
     
@@ -77,25 +80,40 @@ class DataEditor{
         $writer = new DataWriter();
         $writer->writeStaffFile($persons_array);
     }
-    
+
+    /**
+     * TODO:統合したらいいのに。馬鹿みたい
+     * @throws \Exception
+     */
+    public function update($company_status_array){
+        $reader = new DataReader();
+        $reader->read();
+        $persons_array = $reader->getPersonsArray();
+        foreach ($company_status_array as $pos => $value){
+            foreach ($persons_array as &$person){
+                if ($person['id'] == $pos) $person['company'] = $value;
+                continue;
+            }
+        }
+        $writer = new DataWriter();
+        $writer->writeStaffFile($persons_array);
+    }
+
     /**
      * 新しくメンバーを加える。
      * @access public
      */
-    public function add(){
+    public function addMember(){
         $reader = new DataReader();
         $reader->read();
         $persons_array = $reader->getPersonsArray();
         $departments_array = $reader->getDepartmentsArray();
 
-        $max_id = 0;
-        foreach($persons_array as $key => $value){
-            if ($max_id < $value['id']) $max_id = $value['id'];
-        }
-
+        $max_id = $this->maxId($persons_array);
         $array = array(
             'id' => $max_id + 1,
             'name' => $_POST['name'],
+            'company' => Input::get('company'),
             'department' => $_POST['department'],
             'position' => $_POST['position'],
             'sex' => $_POST['sex'],
@@ -104,5 +122,59 @@ class DataEditor{
         $persons_array[] = $array;
         $writer = new DataWriter();
         $writer->writeStaffFile($persons_array);
+    }
+    
+    /**
+     * 新しく組織名を加える。
+     * 新しく加えられた組織のidと名前を返す。
+     * id, name
+     * @return multitype:number Ambigous <string, multitype:>
+     */
+//     TODO:下位組織があった場合処理が変更になるかも
+    public function addOrganization(){
+        $new_organization_name = Input::post('new_organization_name');
+        $reader = new DataReader();
+        $reader->read();
+        $organization_array = $reader->getOrganizationArray();
+        try{
+            $this->validateOrganizationName($new_organization_name, $organization_array);
+        } catch (ValidateException $e){
+            throw new ValidateException('Adding new organization failed. ' . $e->getThisNodeMessage());
+        }
+        $max_id = $this->maxId($organization_array);
+        $array = array(
+            'id' => $max_id + 1,
+            'name' => Input::post('new_organization_name'),
+            'underlayer' => array()
+        );
+        $organization_array[] = $array;
+        $writer = new DataWriter();
+        $writer->writeOrganizationFile($organization_array);
+        
+        return $array;
+    }
+    
+    private function validateOrganizationName($name, $organization_array){
+        $name_index = 'name';
+        foreach ($organization_array as $exist_organization){
+            if ($name === $exist_organization[$name_index]){
+                throw new ValidateException('Same name organization exists.');
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * 配列に設定されている'id'の最大値を返す。
+     * @param array $array
+     * @return Ambigous <number, unknown>
+     */
+    private function maxId(array $array){
+        $max_id = 0;
+        foreach ($array as $value){
+            if ($max_id < $value['id']) $max_id = $value['id'];
+        }
+        
+        return $max_id;
     }
 }

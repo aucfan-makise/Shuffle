@@ -1,4 +1,5 @@
 <?php
+use Fuel\Core\Fieldset;
 class Presenter_Shuffle_Staffdata extends Presenter{
     public function view(){
         foreach ($this->json_persons as $key => $json_person){
@@ -9,30 +10,18 @@ class Presenter_Shuffle_Staffdata extends Presenter{
                 $this->json_persons[$key]['sex'] = '女性';
             }
             $this->json_persons[$key]['department'] = $this->json_departments[$json_person['department']]['name'];
+
+            if(! isset($this->json_persons[$key]['company'])){
+                $this->json_persons[$key]['company'] = '-';
+            }else{
+                $this->json_persons[$key]['company'] = $json_person['company'];
+            }
         }
         $this->persons = $this->json_persons;
-        
-        $department_form_options = array();
-        foreach ($this->json_departments as $key => $value){
-            $department_form_options[$key] = $value['name'];
+        $company_array;
+        foreach ($this->json_organization as $key => $json_company){
+            $company_array[] = $json_company['name'];
         }
-        $this->department_form_options = $department_form_options;
-        
-        $position_form_options = array();
-        foreach ($this->json_positions as $key => $value){
-            $position_form_options[$key] = $value['name'];
-        }
-        $this->position_form_options = $position_form_options;
-        
-        $this->sex_form_options = array(
-            'male' => '男性',
-            'female' => '女性'
-        );
-        $this->status_form_options = array(
-            'presence' => '出席',
-            'absence' => '欠席',
-            'leaved' => '退社',
-        );
-        
+        $this->company = $company_array;
     }
 }
