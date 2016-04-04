@@ -3,7 +3,49 @@ namespace Shuffle;
 class RelationsScore{
     private static $own = null;
     private static $past_data_score;
-    
+    private static $persons;
+
+    public static function setPersons($persons)
+    {
+        self::$persons = $persons;
+    }
+
+    /**
+     * 会社と部署をばらばらにしろというやつ
+     * @return array
+     */
+    private function getOrganizationRelationScoreArray()
+    {
+        $array = array();
+
+        for ($i = 0; $i < count(self::$persons); ++$i){
+            for ($j = $i + 1; $j < count(self::$persons); ++$j){
+                $inner_array = array(
+                    'pare'  =>  array(self::$persons[$i]['id'], self::$persons[$j]['id'])
+                );
+
+                $score = (float) 0;
+                // 所属する会社が同じだった場合のスコア加算
+                if (self::$persons[$i]['company'] === self::$persons[$j]['company']){
+                    $score = (float) 1;
+
+                    // 会社も部署も一緒だった場合のスコア加算
+                    if (self::$persons[$i]['department'] != '8'
+                        && self::$persons[$j]['department'] != '8'
+                        && self::$persons[$i]['department'] === self::$persons[$j]['department']){
+                        $score = (float) 2;
+                    }
+                }
+
+                $inner_array['score'] = $score;
+
+                $array[] = $inner_array;
+            }
+        }
+
+        return $array;
+    }
+
     private function getHistoryScore($year_month){
         $this_month = new \DateTime();
         $datetime = new \DateTime($year_month . '01');
@@ -24,9 +66,13 @@ class RelationsScore{
             foreach ($data as $group){
                 $pares_array_in_one_file = array_merge($pares_array_in_one_file, $this->getPareArray($group, $score));
             }
-            
+
             $pares_array = $this->mergePareArray($pares_array, $pares_array_in_one_file);
         }
+
+        $organization_score_array = $this->getOrganizationRelationScoreArray();
+        $pares_array = $this->mergePareArray($pares_array, $organization_score_array);
+
         self::$past_data_score = $this->sortByScore($pares_array);
     }
     private function mergePareArray($to_array, $from_array){

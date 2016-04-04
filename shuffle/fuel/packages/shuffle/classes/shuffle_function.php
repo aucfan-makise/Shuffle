@@ -8,7 +8,6 @@ class ShuffleFunction{
     private $persons_id_array;
     
     public function __construct(){
-        $this->relations_score = RelationsScore::getPastDataScore();
         $reader = new DataReader();
         $reader->read();
         
@@ -17,6 +16,9 @@ class ShuffleFunction{
         foreach ($reader->getPersonsArray() as $person){
             if ($person['status'] !== 'leaved') $this->persons[] = $person;
         }
+        RelationsScore::setPersons($this->persons);
+        $this->relations_score = RelationsScore::getPastDataScore();
+
         \Config::load('shuffle', true);
         $properties = \Config::get('shuffle.shuffle_properties');
         $this->group_count = $properties['group_count'];
