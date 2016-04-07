@@ -1,0 +1,5 @@
+@CHARSET "UTF-8";
+#organization_add_button {
+	display    : block;
+	cursor     : pointer;
+}
